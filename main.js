@@ -1,4 +1,3 @@
-const file = "images/blackhole.jpg"
 const jimp = require("jimp") // https://www.npmjs.com/package/jimp
 const scribble = require('scribbletune'); // https://scribbletune.com/documentation/core/clip#notes
 const synth = require('synth-js');
@@ -10,8 +9,9 @@ const NoteToFrequencyRangeTable = {
     C2: 65,   D2: 73,  E2: 82,  F2: 87,  G2: 98,  A2: 110, B2: 123,
     C3: 130,  D3: 146, E3: 164, F3: 174, G3: 196, A3: 220, B3: 246, 
     C4: 261,  D4: 293, E4: 329, F4: 349, G4: 392, A4: 440, B4: 493, 
-    C5: 523,  D5: 587, E5: 659, F5: 698, G5: 783, // A5 and E5 have been purposefully excluded 
+    C5: 523,  D5: 587, E5: 659, F5: 698, G5: 783, 
 }
+
 
 
 function closestNote(frequency) {
@@ -21,21 +21,20 @@ function closestNote(frequency) {
     return noteDifferenceObjectArray.sort((a, b) => a.difference - b.difference)[0].note
 }
 
+
+
 const RNote = (r) => closestNote(594 + r*((783-594)/255))
 const GNote = (g) => closestNote(347 + g*((593-347)/255))
 const BNote = (b) => closestNote(65  + b*((346-65)/255))
 
-async function GenerateSong(pixelsPerNote) {
+async function GenerateSong(file, pixelsPerNote) {
     let Notes = []
     await jimp.read(file, function (err, image) {
         if (err) throw err
-
-        
         let iterator = 0 
         let avgRed = 0 
         let avgGreen = 0 
         let avgBlue = 0 
-
         image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
             let red = this.bitmap.data[idx + 0];
             let green = this.bitmap.data[idx + 1];
@@ -68,19 +67,15 @@ async function GenerateSong(pixelsPerNote) {
             accentLow: 1, 
             accent: "-",
         });
-        
-        
         scribble.midi(clip, 'song.mid');
         let midBuffer = fs.readFileSync('song.mid');
         let wavBuffer = synth.midiToWav(midBuffer).toBuffer();
         fs.writeFileSync('song.wav', wavBuffer, {encoding: 'binary'});
-
     });
-    
 }
 
 
-GenerateSong(1000)
+GenerateSong("images/omo.png", 3000)
 
 // CDEFGAB   lowest to highest frequencies  from 0 to 9. 8+ are  ear piercingly high frequency
 // C2 to G5 are a good range of frequencies 
