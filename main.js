@@ -97,60 +97,55 @@ async function GenerateSong(file, pixelsPerNote) {
 // B -> 65  to 346    0 -> 65,  255 -> 346 
 
 
-// client id: 7c0725d4
-// secret: efbaef8af77516dc6786485a0202813e
-// song: 1921816
 
-/*
+
 const client_id = "7c0725d4"
-const id = "1886751"
+const id = "500608900"
 const https = require('https')
 
-const link = `https://mp3l.jamendo.com/download/track/${id}/mp31/`
+
 const newFile = fs.createWriteStream("test.mp3")
-
-
-const request = https.get(link, function(response) {
-  let failed = true 
-  for (let i = 0; i < response.rawHeaders.length; i++) {
-    if (response.rawHeaders[i].includes("attachment;")) failed = false 
-  }
-  if (failed) console.log(`Request for ${id} failed.`)
-  else {
-    console.log(`Request for ${id} succeeded.`)
-    response.pipe(newFile);
-  }
-});
-*/
-
-
-
 const options = {
   hostname: 'api.jamendo.com',
   port: 443,
-  path: `/v3.0/tracks/file?client_id=${client_id}&id=${id}`,
+  path: `/v3.0/playlists/tracks?client_id=${client_id}&id=${id}&limit=200`,
   method: 'GET',
 }
 
+let str = ""
+let givenTracks
 
 const req = https.request(options, res => {
   console.log(`statusCode: ${res.statusCode}`)
-  // console.log(res.rawHeaders)
-  for (const header in res.rawHeaders) {
-    if (res.rawHeaders[header].includes("https://mp3l.jamendo.com/download/track")) {
-      console.log(res.rawHeaders[header])
-    }
-  }
 
-  res.on('data', d => {
-    process.stdout.write(d)
+  res.on('data', data => {
+    // process.stdout.write(data)
+    str += data
+  })
+  res.on('end', () => {
+    // console.log(JSON.parse(str).results[0].tracks.length)
+    givenTracks = JSON.parse(str).results[0].tracks
+
+    
+    const request = https.get(givenTracks[0].audiodownload, function(response) {
+      let failed = true 
+      for (let i = 0; i < response.rawHeaders.length; i++) {
+        if (response.rawHeaders[i].includes("attachment;")) failed = false 
+      }
+      if (failed) console.log(`Request for ${id} failed.`)
+      else {
+        console.log(`Request for ${id} succeeded.`)
+        response.pipe(newFile);
+      }
+    });
+    
+
+
   })
 })
-
 req.on('error', error => {
   console.error(error)
 })
-
 req.end()
 
 
