@@ -75,7 +75,7 @@ async function GenerateSong(file, pixelsPerNote) {
 }
 
 
-GenerateSong("images/omo.png", 3000)
+// GenerateSong("images/omo.png", 3000)
 
 // CDEFGAB   lowest to highest frequencies  from 0 to 9. 8+ are  ear piercingly high frequency
 // C2 to G5 are a good range of frequencies 
@@ -95,5 +95,62 @@ GenerateSong("images/omo.png", 3000)
 // R -> 594 to 783    0 -> 594, 255 -> 783 
 // G -> 347 to 593    0 -> 347, 255 -> 593
 // B -> 65  to 346    0 -> 65,  255 -> 346 
+
+
+// client id: 7c0725d4
+// secret: efbaef8af77516dc6786485a0202813e
+// song: 1921816
+
+/*
+const client_id = "7c0725d4"
+const id = "1886751"
+const https = require('https')
+
+const link = `https://mp3l.jamendo.com/download/track/${id}/mp31/`
+const newFile = fs.createWriteStream("test.mp3")
+
+
+const request = https.get(link, function(response) {
+  let failed = true 
+  for (let i = 0; i < response.rawHeaders.length; i++) {
+    if (response.rawHeaders[i].includes("attachment;")) failed = false 
+  }
+  if (failed) console.log(`Request for ${id} failed.`)
+  else {
+    console.log(`Request for ${id} succeeded.`)
+    response.pipe(newFile);
+  }
+});
+*/
+
+
+
+const options = {
+  hostname: 'api.jamendo.com',
+  port: 443,
+  path: `/v3.0/tracks/file?client_id=${client_id}&id=${id}`,
+  method: 'GET',
+}
+
+
+const req = https.request(options, res => {
+  console.log(`statusCode: ${res.statusCode}`)
+  // console.log(res.rawHeaders)
+  for (const header in res.rawHeaders) {
+    if (res.rawHeaders[header].includes("https://mp3l.jamendo.com/download/track")) {
+      console.log(res.rawHeaders[header])
+    }
+  }
+
+  res.on('data', d => {
+    process.stdout.write(d)
+  })
+})
+
+req.on('error', error => {
+  console.error(error)
+})
+
+req.end()
 
 
