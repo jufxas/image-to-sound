@@ -507,7 +507,7 @@ let PlaylistsToPalette = [
   ),
 
   new PlaylistToPaletteInfo(
-    "Stranger than summer",
+    "Stranger than summer (when clicked it says stranger than halloween)",
     [
       new RGBW(255,165,0,80),
       new RGBW(0,0,0,20),
@@ -783,7 +783,7 @@ let PlaylistsToPalette = [
   ),
 
   new PlaylistToPaletteInfo(
-    "Stranger than halloween",
+    "Stranger than halloween (when clicked, it's stranger than summer)",
     [
       new RGBW(255,165,0,50),
       new RGBW(0,0,0,20),
@@ -1082,7 +1082,7 @@ function equalRGB(rgb1, rgb2, differenceThreshold) {
 // difference threshold starts at 1000. 
 // if sum < 95, mult the difference threshold by 10. 
 
-AverageRGB("./images/colorful.png", 1000)
+// AverageRGB("./images/colorful.png", 1000)
 
 async function AverageRGB(file, differenceThreshold) {
     await jimp.read(file, function (err, image) {
@@ -1163,15 +1163,36 @@ async function AverageRGB(file, differenceThreshold) {
 
 
 
-/*
+
 const newFile = fs.createWriteStream("test.mp3")
-const options = {
-  hostname: 'api.jamendo.com',
-  port: 443,
-  path: `/v3.0/playlists/tracks?client_id=${client_id}&id=${id}&limit=200`,
-  method: 'GET',
+for (let i = 0; i < PlaylistsToPalette.length; i++) {
+  const options = {
+    hostname: 'api.jamendo.com',
+    port: 443,
+    path: `/v3.0/playlists/tracks?client_id=${client_id}&id=${ PlaylistsToPalette[i].id }&limit=200`,
+    method: 'GET',
+  }
+  let str = ""
+  const req = https.request(options, res => {
+    console.log(`statusCode: ${res.statusCode}`)
+
+    res.on('data', data => {ß
+      str += data
+    })
+    res.on('end', () => {
+      let v = JSON.parse(str).results[0].name
+      console.log(`INDEX: ${i}\nCALLED: ${PlaylistsToPalette[i].name}\nRECEIVED: ${v}`)
+    })
+  })
+  req.on('error', error => {
+    console.error(error)
+  })
+  req.end()
 }
 
+
+
+/*
 let str = ""
 let givenTracks
 
