@@ -13,5 +13,14 @@
     "jimp": "^0.16.1",
     "scribbletune": "^5.0.0-alpha.2",
     "synth-js": "^0.1.2"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jufxas/image-to-sound.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jufxas/image-to-sound/issues"
+  },
+  "homepage": "https://github.com/jufxas/image-to-sound#readme"
 }
