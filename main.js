@@ -2,10 +2,8 @@ const jimp = require("jimp") // https://www.npmjs.com/package/jimp
 const https = require('https')
 const fs = require('fs');
 const client_id = "7c0725d4"
-const id = "500608900"
-
-
-
+const songFile = fs.createWriteStream("test.mp3")
+const COLOR_VALUE_MAX = colorValue(255,255,255)
 
 class RGB {
   constructor(r, g, b) {
@@ -17,38 +15,6 @@ class RGB {
     return `rgb(${this.r},${this.g},${this.b})`
   }
 }
-
-class RGBW {
-  constructor(r, g, b, weight) {
-    this.r = r 
-    this.g = g 
-    this.b = b 
-    this.weight = weight / 100
-    this.rgbValue = colorValue(r, g , b)
-  }
-  format() {
-    return `rgb(${this.r},${this.g},${this.b})`
-  }
-}
-
-function getWeightedAverage(paletteList) {
-  let weightedAverage = 0
-  for (let i = 0; i < paletteList.length; i++) {
-    weightedAverage += paletteList[i].weight * (  paletteList[i].rgbValue )
-  }
-  return weightedAverage
-}
-
-
-class PlaylistToPaletteInfo {
-  constructor(name, palette, id) {
-    this.name = name
-    this.palette = palette
-    this.id = id 
-    this.weightedAverage = getWeightedAverage(palette)
-  }
-}
-
 
 
 
@@ -129,17 +95,27 @@ let idToWeight = [
 function colorValue(r,g,b) {
   return r + g*256 + b*65536
 }
-const COLOR_VALUE_MAX = colorValue(255,255,255)
-
 
 function equalRGB(rgb1, rgb2, differenceThreshold) {
   return Math.abs(colorValue(rgb1.r, rgb1.g, rgb1.b) - colorValue(rgb2.r, rgb2.g, rgb2.b)) <= differenceThreshold
 } 
 
+function closestWeightToID(sum) {
+  // sorry for bad variable names! this takes the difference between the sum (given) and all palette sums of the idToWeight list and the one with the lowest sum will return its corresponding jamendo playlist ID 
+  let list = []
+  for (let i = 0; i < idToWeight.length; i++) {
+    let diff = Math.abs( idToWeight[i][ Object.keys(idToWeight[i])]  - sum)
+    list.push( {
+      id: Object.keys(idToWeight[i])[0],
+      diff: diff,
+    })
+  }
+  return list.sort((a, b) => a.diff - b.diff)[0].id
+}
 
-AverageRGB("./images/diff.jpg", 1000)
+GenerateSong("./images/amogus.png", 1000)
 
-async function AverageRGB(file, differenceThreshold) {
+async function GenerateSong(file, differenceThreshold) {
     await jimp.read(file, function (err, image) {
         if (err) throw err
         let avgRed = 0 
@@ -147,6 +123,10 @@ async function AverageRGB(file, differenceThreshold) {
         let avgBlue = 0 
         let colorPalette = []
         let colorAndWeight = {}
+        
+        let sum = 0 
+        let paletteSum = 0 
+        const colorAndWeightList = []
 
         const pixels = image.bitmap.width * image.bitmap.height
         image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
@@ -157,7 +137,6 @@ async function AverageRGB(file, differenceThreshold) {
             avgRed += red 
             avgGreen += green
             avgBlue += blue 
-            
             
             if (colorPalette.length === 0) {
               colorPalette.push(currentPixelRGB) 
@@ -178,14 +157,12 @@ async function AverageRGB(file, differenceThreshold) {
             }
         })
 
-        let sum = 0 
-        let paletteSum = 0 
-        const colorAndWeightList = []
+        
         console.log(`Colors: ${Object.keys(colorAndWeight).length}`)
 
         if (Object.keys(colorAndWeight).length >= 1000) {
           console.log("********TOO LONG, REDO*******")
-          AverageRGB(file, differenceThreshold*10)
+          GenerateSong(file, differenceThreshold*10)
           return; 
         }
 
@@ -210,7 +187,7 @@ async function AverageRGB(file, differenceThreshold) {
 
         if (sum < 95) {
           console.log("********REDO*******")
-          AverageRGB(file, differenceThreshold*10)
+          GenerateSong(file, differenceThreshold*10)
         } else {
           console.log(paletteSum)
           let id = closestWeightToID(paletteSum)
@@ -238,9 +215,8 @@ async function AverageRGB(file, differenceThreshold) {
               let song= tracks[selectedIndex]
 
               console.log(`SONG: ${song.name}`)
-              const songFile = fs.createWriteStream("test.mp3")
 
-              const request = https.get(song.audiodownload, function(response) {
+              https.get(song.audiodownload, function(response) {
                 let failed = true 
                 for (let i = 0; i < response.rawHeaders.length; i++) {
                   if (response.rawHeaders[i].includes("attachment;")) failed = false 
@@ -264,62 +240,3 @@ async function AverageRGB(file, differenceThreshold) {
     });
 }
 
-function closestWeightToID(sum) {
-  let lis = []
-  for (let i = 0; i < idToWeight.length; i++) {
-    let diff = Math.abs( idToWeight[i][ Object.keys(idToWeight[i])]  - sum)
-    lis.push( {
-      id: Object.keys(idToWeight[i])[0],
-      diff: diff,
-    })
-  }
-  return lis.sort((a, b) => a.diff - b.diff)[0].id
-}
-
-
-
-
-const newFile = fs.createWriteStream("test.mp3")
-
-
-
-
-/*
-let str = ""
-let givenTracks
-
-const req = https.request(options, res => {
-  console.log(`statusCode: ${res.statusCode}`)
-
-  res.on('data', data => {
-    // process.stdout.write(data)
-    str += data
-  })
-  res.on('end', () => {
-    // console.log(JSON.parse(str).results[0].tracks.length)
-    givenTracks = JSON.parse(str).results[0].tracks
-
-    
-    const request = https.get(givenTracks[0].audiodownload, function(response) {
-      let failed = true 
-      for (let i = 0; i < response.rawHeaders.length; i++) {
-        if (response.rawHeaders[i].includes("attachment;")) failed = false 
-      }
-      if (failed) console.log(`Request for ${id} failed.`)
-      else {
-        console.log(`Request for ${id} succeeded.`)
-        response.pipe(newFile);
-      }
-    });
-    
-
-
-  })
-})
-req.on('error', error => {
-  console.error(error)
-})
-req.end()
-
-
-*/
