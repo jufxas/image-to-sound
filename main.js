@@ -28,105 +28,12 @@ class RGBW {
   }
 }
 
-// v1
-// function getRGBIntAverage(paletteList) {
-//   let avgR = 0 
-//   let avgG = 0
-//   let avgB = 0
+// min=0, max=3
+function colorDifferenceScore(rgb1, rgb2) {
+  return (Math.abs(rgb1.r - rgb2.r) + Math.abs(rgb1.g - rgb2.g) + Math.abs(rgb1.b - rgb2.b)) / 255
+}
 
-//   for (let i = 0; i < paletteList.length; i++) {
-//       avgR += paletteList[i].r * paletteList[i].weight
-//       avgG += paletteList[i].g * paletteList[i].weight
-//       avgB += paletteList[i].b * paletteList[i].weight
-//   }
-//   avgR /= paletteList.length
-//   avgG /= paletteList.length
-//   avgB /= paletteList.length
-//   return Math.round(colorValue(avgR, avgG, avgB))
-// }
 
-// v2
-// function getRGBIntAverage(paletteList) {
-//   let weightedAverage = 0
-//   for (let i = 0; i < paletteList.length; i++) {
-//     weightedAverage += paletteList[i].weight * (  paletteList[i].rgbValue )
-//   }
-//   return weightedAverage
-// }
-
-// v3
-// function getRGBIntAverage(paletteList) {
-//   let avgR = 0 
-//   let avgG = 0
-//   let avgB = 0
-
-//   for (let i = 0; i < paletteList.length; i++) {
-//       avgR += paletteList[i].r * paletteList[i].weight
-//       avgG += paletteList[i].g * paletteList[i].weight
-//       avgB += paletteList[i].b * paletteList[i].weight
-//   }
-//   return Math.round(colorValue(avgR, avgG, avgB))
-
-// }
-
-// v4
-// function getRGBIntAverage(paletteList) {
-//   let avgR = 0 
-//   let avgG = 0
-//   let avgB = 0
-
-//   for (let i = 0; i < paletteList.length; i++) {
-//       avgR += paletteList[i].r * paletteList[i].weight
-//       avgG += paletteList[i].g * paletteList[i].weight
-//       avgB += paletteList[i].b * paletteList[i].weight
-//   }
-//   return Math.round(avgR + avgG + avgB)
-// }
-
-// v5
-// function getRGBIntAverage(paletteList) {
-//   let avgR = 0 
-//   let avgG = 0
-//   let avgB = 0
-
-//   for (let i = 0; i < paletteList.length; i++) {
-//       avgR += paletteList[i].r * paletteList[i].weight
-//       avgG += paletteList[i].g * paletteList[i].weight
-//       avgB += paletteList[i].b * paletteList[i].weight
-//   }
-//   return Math.round(colorValue(avgR, avgG, avgB))
-// }
-
-//v6
-// function getRGBIntAverage(paletteList) {
-//   let avgR = 0 
-//   let avgG = 0
-//   let avgB = 0
-
-//   for (let i = 0; i < paletteList.length; i++) {
-//       avgR += paletteList[i].r
-//       avgG += paletteList[i].g
-//       avgB += paletteList[i].b
-//   }
-//   avgR /= paletteList.length
-//   avgG /= paletteList.length
-//   avgB /= paletteList.length
-//   return Math.round(colorValue(avgR, avgG, avgB))
-// }
-
-//v7 
-// function getRGBIntAverage(paletteList) {
-//   let avg = 0 
-
-//   for (let i = 0; i < paletteList.length; i++) {
-//       avg += paletteList[i].weight * 
-//         colorValue(paletteList[i].r, paletteList[i].g, paletteList[i].b)
-//   }
-
-//   return avg
-// }
-
-//v8
 function getRGBIntAverage(paletteList) {
   let avgR = 0 
   let avgG = 0
@@ -137,8 +44,12 @@ function getRGBIntAverage(paletteList) {
       avgG += paletteList[i].g * paletteList[i].weight
       avgB += paletteList[i].b * paletteList[i].weight
   }
-  return Math.round(avgR + avgG +avgB)
+  avgR /= paletteList.length
+  avgG /= paletteList.length
+  avgB /= paletteList.length
+  return Math.round(colorValue(avgR, avgG, avgB))
 }
+
 
 GenerateSong("./images/diff.png", 1000)
 let rawIdToWeightData = fs.readFileSync("./weights/idToWeightV8.json")
@@ -296,4 +207,5 @@ async function GenerateSong(file, differenceThreshold) {
         }
     });
 }
+
 

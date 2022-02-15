@@ -37,6 +37,42 @@ class RGBW {
     }
 }
 
+function colorDifferenceScore(rgb1, rgb2) {
+  return (Math.abs(rgb1.r - rgb2.r) + Math.abs(rgb1.g - rgb2.g) + Math.abs(rgb1.b - rgb2.b)) / 255
+}
+
+function comparePalettes(paletteList1, paletteList2) {
+  let score1 = 0 
+  let score2 = 0 
+  
+  for (let i = 0; i < paletteList1.length; i++) {
+    loop1: 
+    for (let j = 0; j < paletteList2.length; j++) {
+      if (colorDifferenceScore(paletteList1[i], paletteList2[j]) <= 0.3) {
+        score1++; break loop1;
+      }
+    }
+
+  }
+
+  for (let i = 0; i < paletteList2.length; i++) {
+    loop1: 
+    for (let j = 0; j < paletteList1.length; j++) {
+      if (colorDifferenceScore(paletteList1[j], paletteList2[i]) <= 0.3) {
+        score2++; break loop1
+      }
+    }
+
+  }
+
+  score1 /= paletteList1.length
+  score2 /= paletteList2.length
+
+  return Math.min(score1,score2)  
+}
+
+
+
   let PlaylistsToPalette = [
     new PlaylistToPaletteInfo(
       "Metal",
@@ -710,10 +746,47 @@ class RGBW {
   
   ]
 
+for (let i = 0 ; i < PlaylistsToPalette.length; i++) {
+  /*
+  new PlaylistToPaletteInfo(
+      "Metal",
+      [
+        new RGBW(0,0,139,50),
+        new RGBW(0,0,0,25),
+        new RGBW(128,128,128,25),
+      ],
+      500608898
+    ),
 
-  for (let i = 0 ; i < PlaylistsToPalette.length; i++) {
-      console.log(`{ "${PlaylistsToPalette[i].id}":${PlaylistsToPalette[i].weightedAverage} },`)
+      [
+        { palette: [ [rgb1], [rgb2], ...], id: ... }, 
+        { palette: [ [rgb1], [rgb2], ...], id: ... }, 
+      ]
+
+  */
+  let reveal = (palette) => {
+    let string = "["
+    for (let i = 0; i < palette.length; i++) {
+      if (i !== palette.length - 1)
+      string += `[${palette[i].r}, ${palette[i].g}, ${palette[i].b}],`
+      else 
+      string += `[${palette[i].r}, ${palette[i].g}, ${palette[i].b}]`
+    }
+    return string + "]"
   }
+
+
+  console.log(
+    `{"palette": ${reveal(PlaylistsToPalette[i].palette)} , "id": ${PlaylistsToPalette[i].id}},`
+  )
+
+}
+
+
+
+  // for (let i = 0 ; i < PlaylistsToPalette.length; i++) {
+  //     console.log(`{ "${PlaylistsToPalette[i].id}":${PlaylistsToPalette[i].weightedAverage} },`)
+  // }
 
   /*
   Metal -> Greyish, black. 
