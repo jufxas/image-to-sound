@@ -5,6 +5,10 @@ const client_id = "7c0725d4"
 const songFile = fs.createWriteStream("test.mp3")
 const COLOR_VALUE_MAX = colorValue(255,255,255)
 
+let raw = JSON.parse(fs.readFileSync("./playlistInfo.json"))
+let PlaylistsToPalette = []
+
+
 class RGB {
   constructor(r, g, b) {
     this.r = r 
@@ -16,45 +20,10 @@ class RGB {
   }
 }
 
-class RGBW {
-  constructor(r, g, b, weight) {
-      this.r = r 
-      this.g = g 
-      this.b = b 
-      this.weight = weight / 100
-  }
-  format() {
-      return `rgb(${this.r},${this.g},${this.b})`
-  }
-}
-
 // min=0, max=3
 function colorDifferenceScore(rgb1, rgb2) {
   return (Math.abs(rgb1.r - rgb2.r) + Math.abs(rgb1.g - rgb2.g) + Math.abs(rgb1.b - rgb2.b)) / 255
 }
-
-
-function getRGBIntAverage(paletteList) {
-  let avgR = 0 
-  let avgG = 0
-  let avgB = 0
-
-  for (let i = 0; i < paletteList.length; i++) {
-      avgR += paletteList[i].r * paletteList[i].weight
-      avgG += paletteList[i].g * paletteList[i].weight
-      avgB += paletteList[i].b * paletteList[i].weight
-  }
-  avgR /= paletteList.length
-  avgG /= paletteList.length
-  avgB /= paletteList.length
-  return Math.round(colorValue(avgR, avgG, avgB))
-}
-
-
-GenerateSong("./images/diff.png", 1000)
-let rawIdToWeightData = fs.readFileSync("./weights/idToWeightV8.json")
-let idToWeight = JSON.parse(rawIdToWeightData)
-
 
 
 function colorValue(r,g,b) {
@@ -65,19 +34,58 @@ function equalRGB(rgb1, rgb2, differenceThreshold) {
   return Math.abs(colorValue(rgb1.r, rgb1.g, rgb1.b) - colorValue(rgb2.r, rgb2.g, rgb2.b)) <= differenceThreshold
 } 
 
-function closestWeightToID(sum) {
-  // sorry for bad variable names! this takes the difference between the sum (given) and all palette sums of the idToWeight list and the one with the lowest sum will return its corresponding jamendo playlist ID 
-  let list = []
-  for (let i = 0; i < idToWeight.length; i++) {
-    let diff = Math.abs( idToWeight[i][ Object.keys(idToWeight[i])]  - sum)
-    list.push( {
-      id: Object.keys(idToWeight[i])[0],
-      diff: diff,
-    })
+
+// maxDifference is from 0 to 1 
+function comparePalettes(paletteList1, paletteList2, maxDifference = 0.3) {
+  let score1 = 0 
+  let score2 = 0 
+  
+  for (let i = 0; i < paletteList1.length; i++) {
+    loop1: 
+    for (let j = 0; j < paletteList2.length; j++) {
+      if (colorDifferenceScore(paletteList1[i], paletteList2[j]) <= maxDifference) {
+        score1++; break loop1;
+      }
+    }
+
   }
-  return list.sort((a, b) => a.diff - b.diff)[0].id
+
+  for (let i = 0; i < paletteList2.length; i++) {
+    loop1: 
+    for (let j = 0; j < paletteList1.length; j++) {
+      if (colorDifferenceScore(paletteList1[j], paletteList2[i]) <= maxDifference) {
+        score2++; break loop1
+      }
+    }
+
+  }
+
+  score1 /= paletteList1.length
+  score2 /= paletteList2.length
+
+  return Math.min(score1,score2)  
 }
 
+// 0.2 is good 
+function closestPalette(palette) {
+  let paletteScores = []
+  for (let i = 0; i < PlaylistsToPalette.length; i++) {
+    paletteScores.push({score: comparePalettes(palette, PlaylistsToPalette[i].palette, 0.2), id: PlaylistsToPalette[i].id})
+  }
+  paletteScores.sort((a, b) => b.score - a.score)
+  return paletteScores[0].id
+}
+
+(function initializePlaylistsToPalette() {
+  for (let i = 0; i < raw.length; i++) {
+    let rgbArrays = []
+    for (let j = 0; j < raw[i].palette.length; j++) 
+      rgbArrays.push(new RGB(raw[i].palette[j][0],raw[i].palette[j][1],raw[i].palette[j][2]))
+    PlaylistsToPalette.push({ palette: rgbArrays, id: raw[i].id })
+  }
+})()
+
+GenerateSong("./images/colorful.png", 1000)
 
 
 async function GenerateSong(file, differenceThreshold) {
@@ -88,10 +96,7 @@ async function GenerateSong(file, differenceThreshold) {
         let avgBlue = 0 
         let colorPalette = []
         let colorAndWeight = {}
-
         let sum = 0 
-        let paletteSum = 0 
-        const colorAndWeightList = []
 
         const pixels = image.bitmap.width * image.bitmap.height
         image.scan(0, 0, image.bitmap.width, image.bitmap.height, function(x, y, idx) {
@@ -133,37 +138,33 @@ async function GenerateSong(file, differenceThreshold) {
 
           // CHANGE PALETTE SUM 
         let iterator = 0 
-        let weightedPalette = []
+        let organizedPalette = []
+
         for (const color in colorAndWeight) {
           let colorWeight = parseFloat(((colorAndWeight[color] / pixels) * 100).toFixed(2))
           if (colorWeight >= 1) {
-            colorAndWeightList.push({
-              color: color, 
-              weight: colorWeight
-            })
             sum += colorWeight
-            weightedPalette.push(new RGBW( colorPalette[iterator].r, colorPalette[iterator].g, colorPalette[iterator].b, colorWeight ))
+            organizedPalette.push(new RGB( colorPalette[iterator].r, colorPalette[iterator].g, colorPalette[iterator].b ))
           }
           iterator++
         }
         
-        paletteSum = getRGBIntAverage(weightedPalette)
-        
-
-        console.log(colorAndWeightList)
+        avgRed /= pixels; avgBlue /= pixels; avgGreen /= pixels
         console.log(sum)
-        console.log({r: Math.round(avgRed / pixels), g: Math.round(avgGreen / pixels), b: Math.round(avgBlue / pixels)})
+        console.log({r: Math.round(avgRed), g: Math.round(avgGreen), b: Math.round(avgBlue)})
+        console.log(organizedPalette)
 
         if (sum < 95) {
           console.log("********REDO*******")
           GenerateSong(file, differenceThreshold*10)
         } else {
-          let id = closestWeightToID(paletteSum)
+
+          let id = closestPalette(organizedPalette)
 
           const options = {
             hostname: 'api.jamendo.com',
             port: 443,
-            path: `/v3.0/playlists/tracks?client_id=${client_id}&id=${ id }&limit=200`,
+            path: `/v3.0/playlists/tracks?client_id=${client_id}&id=${id}&limit=200`,
             method: 'GET',
           }
           let str = ""
@@ -175,12 +176,12 @@ async function GenerateSong(file, differenceThreshold) {
             })
             res.on('end', () => {
               let tracks = JSON.parse(str).results[0].tracks
-              console.log(`SUM: ${paletteSum}\nID: ${id}\nPLAYLIST: ${JSON.parse(str).results[0].name}`)
+              console.log(`ID: ${id}\nPLAYLIST: ${JSON.parse(str).results[0].name}`)
               console.log(`LENGTH: ${tracks.length}`)
 
-              let avgRGBToInt = colorValue(avgRed/pixels, avgBlue/pixels, avgGreen/pixels)
+              let avgRGBToInt = colorValue(avgRed, avgBlue, avgGreen)
               let selectedIndex = Math.round((avgRGBToInt*(tracks.length - 1))/COLOR_VALUE_MAX)
-              let song= tracks[selectedIndex]
+              let song = tracks[selectedIndex]
 
               console.log(`SONG: ${song.name}`)
 
