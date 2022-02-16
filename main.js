@@ -74,7 +74,6 @@ function closestPalette(palette) {
     paletteScores.push({score: comparePalettes(palette, PlaylistsToPalette[i].palette, 0.2), id: PlaylistsToPalette[i].id})  // ? EXPERIMENTAL value -> the comparePalettes 3rd parameter  
   }
   paletteScores.sort((a, b) => b.score - a.score)
-  console.log(paletteScores)
   return paletteScores[0].id
 }
 
@@ -88,7 +87,7 @@ function closestPalette(palette) {
   }
 })()
 
-GenerateSong("./images/omo.png")
+GenerateSong("./images/red.png")
 
 
 async function GenerateSong(file) {
@@ -163,13 +162,13 @@ async function GenerateSong(file) {
             str += data
           })
           res.on('end', () => {
-            console.log(`ID: ${id}\nPLAYLIST: ${JSON.parse(str).results[0].name}`)
-            console.log(`LENGTH: ${tracks.length}`)
-
             let tracks = JSON.parse(str).results[0].tracks
             let avgRGBToInt = colorValue(avgRed, avgBlue, avgGreen)
             let selectedIndex = Math.round((avgRGBToInt*(tracks.length - 1))/COLOR_VALUE_MAX)
             let song = tracks[selectedIndex]
+
+            console.log(`ID: ${id}\nPLAYLIST: ${JSON.parse(str).results[0].name}`)
+            console.log(`LENGTH: ${tracks.length}`)
 
             console.log(`SONG: ${song.name}`)
 
