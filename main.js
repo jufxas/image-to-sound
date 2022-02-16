@@ -31,7 +31,9 @@ function colorValue(r,g,b) {
 }
 
 function equalRGB(rgb1, rgb2, differenceThreshold) {
-  return Math.abs(colorValue(rgb1.r, rgb1.g, rgb1.b) - colorValue(rgb2.r, rgb2.g, rgb2.b)) <= differenceThreshold
+  // return Math.abs(colorValue(rgb1.r, rgb1.g, rgb1.b) - colorValue(rgb2.r, rgb2.g, rgb2.b)) <= differenceThreshold
+  return colorDifferenceScore(rgb1, rgb2) <= 0.5
+  // 0.5
 } 
 
 
@@ -66,13 +68,15 @@ function comparePalettes(paletteList1, paletteList2, maxDifference = 0.3) {
   return Math.min(score1,score2)  
 }
 
-// 0.2 is good 
+
 function closestPalette(palette) {
   let paletteScores = []
   for (let i = 0; i < PlaylistsToPalette.length; i++) {
     paletteScores.push({score: comparePalettes(palette, PlaylistsToPalette[i].palette, 0.2), id: PlaylistsToPalette[i].id})
   }
+  // 0.4
   paletteScores.sort((a, b) => b.score - a.score)
+  console.log(paletteScores)
   return paletteScores[0].id
 }
 
@@ -85,7 +89,7 @@ function closestPalette(palette) {
   }
 })()
 
-GenerateSong("./images/colorful.png", 1000)
+GenerateSong("./images/omo.png", 1000)
 
 
 async function GenerateSong(file, differenceThreshold) {
@@ -154,7 +158,7 @@ async function GenerateSong(file, differenceThreshold) {
         console.log({r: Math.round(avgRed), g: Math.round(avgGreen), b: Math.round(avgBlue)})
         console.log(organizedPalette)
 
-        if (sum < 95) {
+        if (sum < 0) {  // 95 to 0 
           console.log("********REDO*******")
           GenerateSong(file, differenceThreshold*10)
         } else {
